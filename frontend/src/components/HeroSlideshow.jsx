@@ -148,7 +148,6 @@ export default function HeroSlideshow() {
             <span>🔥 Biogas potential: 1 ton dry biomass = 280 m³ biogas &nbsp;|&nbsp;</span>
             <span>⚗️ Biochar value: ₹10,000 per ton — improving soil health &nbsp;|&nbsp;</span>
             <span>📍 6 certified biomass plants across Maharashtra &nbsp;|&nbsp;</span>
-            <span>🏆 Pune Agri Hackathon 2026 — Team Thunder &nbsp;|&nbsp;</span>
           </div>
         </div>
         <div className="ticker-dots">

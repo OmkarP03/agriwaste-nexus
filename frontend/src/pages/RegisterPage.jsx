@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ChatBot from '../components/ChatBot';
+import AuthLayout from '../components/AuthLayout';
 
 const CROPS = ['rice', 'wheat', 'maize', 'sugarcane', 'cotton', 'soybean'];
 const STATES = ['Maharashtra', 'Karnataka', 'Gujarat'];
@@ -61,37 +63,63 @@ export default function RegisterPage({ onSwitch, onSuccess }) {
         setStep(s => s + 1);
     }
 
-    function handleSubmit(e) {
-        e.preventDefault();
-        setLoading(true);
-        setTimeout(() => {
-            const result = register(form);
-            if (result.success) { onSuccess(); }
-            else { setError(result.error); setStep(1); }
-            setLoading(false);
-        }, 900);
+   async function handleSubmit(e) {
+
+    e.preventDefault();
+
+    console.log("SUBMIT CLICKED");
+
+    setLoading(true);
+
+    try {
+
+        const result = await register(form);
+
+        if (result.success) {
+
+            onSuccess();
+
+        } else {
+
+            setError(result.error);
+            setStep(1);
+
+        }
+
+    } catch (err) {
+
+        setError('Registration failed');
+
     }
+
+    setLoading(false);
+
+}
 
     const progressWidth = `${(step / 3) * 100}%`;
 
     return (
-        <div className="auth-page">
-            <div className="auth-left">
-                <div className="auth-brand">
-                    <span style={{ fontSize: '3rem' }}>🌿</span>
-                    <h1>AgriWaste Nexus</h1>
-                    <p>Join thousands of farmers earning from waste</p>
-                </div>
+        <>
+        <AuthLayout
+            headline="Join farmers turning residue into income"
+            sub="Create a free account to calculate your farm waste, earn carbon credits and reach verified buyers."
+            aside={
                 <div className="register-benefits">
-                    <div className="rb-item">✅ Free waste-to-energy calculator</div>
-                    <div className="rb-item">✅ Earn carbon credits</div>
-                    <div className="rb-item">✅ Connect with 50+ buyers</div>
-                    <div className="rb-item">✅ Find nearest biogas plants</div>
-                    <div className="rb-item">✅ Track your income</div>
+                    {[
+                        'Free waste-to-energy calculator',
+                        'Track carbon credits you earn',
+                        'Connect with verified buyers',
+                        'Find the nearest biogas plants',
+                        'See your potential income',
+                    ].map(b => (
+                        <div className="rb-item" key={b}>
+                            <span className="rb-tick" aria-hidden="true">✓</span>
+                            {b}
+                        </div>
+                    ))}
                 </div>
-            </div>
-
-            <div className="auth-right">
+            }
+        >
                 <div className="auth-box">
                     <h2 className="auth-title">Create Account 🌱</h2>
                     <p className="auth-subtitle">
@@ -135,6 +163,7 @@ export default function RegisterPage({ onSwitch, onSuccess }) {
                                 <div className="auth-field">
                                     <label>Password</label>
                                     <div className="pass-wrap">
+                                        <span className="field-icon" aria-hidden="true">🔒</span>
                                         <input
                                             type={showPass ? 'text' : 'password'}
                                             name="password"
@@ -142,8 +171,13 @@ export default function RegisterPage({ onSwitch, onSuccess }) {
                                             onChange={handleChange}
                                             placeholder="Minimum 6 characters"
                                         />
-                                        <button type="button" className="pass-toggle" onClick={() => setShowPass(!showPass)}>
-                                            {showPass ? '🙈' : '👁️'}
+                                        <button
+                                            type="button"
+                                            className="pass-toggle"
+                                            onClick={() => setShowPass(!showPass)}
+                                            aria-label={showPass ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showPass ? '🙈' : '👁'}
                                         </button>
                                     </div>
                                 </div>
@@ -256,6 +290,7 @@ export default function RegisterPage({ onSwitch, onSuccess }) {
                                     <div className="cc-row"><span>Mobile</span><strong>+91 {form.mobile}</strong></div>
                                     <div className="cc-row"><span>Role</span><strong>{form.role === 'farmer' ? '🧑‍🌾 Farmer' : '🏭 Buyer'}</strong></div>
                                     {form.role === 'farmer' && <>
+                                        <div className="cc-row"><span>State</span><strong>{form.state}</strong></div>
                                         <div className="cc-row"><span>District</span><strong>{form.district}</strong></div>
                                         <div className="cc-row"><span>Main Crop</span><strong>{form.cropType}</strong></div>
                                         <div className="cc-row"><span>Land Area</span><strong>{form.landArea} acres</strong></div>
@@ -276,7 +311,8 @@ export default function RegisterPage({ onSwitch, onSuccess }) {
                         <button className="auth-link" onClick={() => onSwitch('login')}>Login here</button>
                     </p>
                 </div>
-            </div>
-        </div>
+        </AuthLayout>
+        <ChatBot />
+        </>
     );
 }

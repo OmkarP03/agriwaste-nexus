@@ -18,6 +18,33 @@ const CARBON_CREDIT_PRICE_INR = 1500;
 const BIOGAS_KWH_PER_M3       = 6.0;
 const BIOGAS_LPG_EQUIV        = 0.45;
 
+// ── Digester sizing & economics ───────────────────────────────
+// Indicative figures for planning only. Plant costs and fuel prices vary
+// by district, vendor and year — update these in one place when you have
+// local quotes. Subsidy is deliberately NOT modelled: rates under the
+// national biogas programme change, so we point the farmer at the scheme
+// rather than inventing a number.
+const PLANT_SIZES_M3_DAY   = [1, 2, 3, 4, 6, 8, 10, 15, 20, 25, 35, 50];
+const GAS_PER_M3_DIGESTER  = 0.35;   // m³ gas per m³ of digester per day
+const COST_PER_M3_DAY_INR  = [       // installed cost, by plant size band
+  { upTo: 6,        rate: 32000 },
+  { upTo: 20,       rate: 26000 },
+  { upTo: Infinity, rate: 20000 },
+];
+const LPG_CYLINDER_KG        = 14.2;   // domestic cylinder
+const LPG_CYLINDER_PRICE_INR = 1100;   // indicative refill price
+const ELECTRICITY_INR_PER_KWH = 8;
+const FEED_DAYS_PER_YEAR     = 365;    // residue is stored and fed year-round
+
+function pickPlantSize(dailyM3) {
+  return PLANT_SIZES_M3_DAY.find(s => s >= dailyM3)
+    || PLANT_SIZES_M3_DAY[PLANT_SIZES_M3_DAY.length - 1];
+}
+
+function costPerM3Day(size) {
+  return COST_PER_M3_DAY_INR.find(b => size <= b.upTo).rate;
+}
+
 function getCropData(cropType) {
   return CROP_DATA[cropType.toLowerCase()] || CROP_DATA.default;
 }
@@ -55,6 +82,28 @@ function calculateBiogas({ usableBiomass, cropType, digesterDays = 30 }) {
   const lpgEquivalentKg = +(totalBiogasM3 * BIOGAS_LPG_EQUIV).toFixed(1);
   const co2OffsetLPG   = +(lpgEquivalentKg * 2.98 / 1000).toFixed(2);
 
+  // ── Sizing ──
+  // The 30-day figures above describe how fast this residue COULD be
+  // digested. A real farm plant is sized differently: the residue is
+  // stored and fed a little each day, so the plant is sized against
+  // year-round operation, not a one-month sprint. Sizing on the 30-day
+  // rate would recommend a community plant for a two-acre field.
+  const steadyDailyM3     = +(totalBiogasM3 / FEED_DAYS_PER_YEAR).toFixed(2);
+  const plantSizeM3PerDay = pickPlantSize(steadyDailyM3);
+  const digesterVolumeM3  = +(plantSizeM3PerDay / GAS_PER_M3_DIGESTER).toFixed(1);
+  const capitalCostINR    = Math.round(plantSizeM3PerDay * costPerM3Day(plantSizeM3PerDay));
+
+  // ── What a year of this residue is worth, two ways ──
+  const lpgCylinders    = +(lpgEquivalentKg / LPG_CYLINDER_KG).toFixed(1);
+  const lpgValueINR     = Math.round(lpgCylinders * LPG_CYLINDER_PRICE_INR);
+  const electricityValueINR = Math.round(totalKWh * ELECTRICITY_INR_PER_KWH);
+
+  // Payback against the cooking-gas route, which is what family plants
+  // actually displace. Assumes this much residue every year.
+  const paybackYears = lpgValueINR > 0
+    ? +(capitalCostINR / lpgValueINR).toFixed(1)
+    : null;
+
   return {
     totalBiogasM3,
     dailyBiogasM3,
@@ -63,7 +112,21 @@ function calculateBiogas({ usableBiomass, cropType, digesterDays = 30 }) {
     dailyKWh,
     lpgEquivalentKg,
     co2OffsetLPG,
-    digesterDays
+    digesterDays,
+
+    economics: {
+      steadyDailyM3,
+      plantSizeM3PerDay,
+      digesterVolumeM3,
+      capitalCostINR,
+      lpgCylinders,
+      lpgValueINR,
+      electricityValueINR,
+      paybackYears,
+      lpgCylinderPriceINR: LPG_CYLINDER_PRICE_INR,
+      electricityRateINR: ELECTRICITY_INR_PER_KWH,
+      basis: 'Indicative planning figures, assuming this much residue each year and the plant run year-round. Confirm the plant cost with a local vendor and check the current national biogas subsidy — it is not included here.'
+    }
   };
 }
 
@@ -114,7 +177,7 @@ function calculateCarbonCredits({ co2Avoided, area }) {
     subsidyPotential: +subsidyPotential,
     totalIncome,
     equivalentTrees: Math.round(co2Avoided * 45),
-    creditStandard: 'Verra VCS / Gold Standard'
+    creditStandard: 'Estimated using Verra VCS methodology'
   };
 }
 

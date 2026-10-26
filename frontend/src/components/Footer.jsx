@@ -74,11 +74,11 @@ function SocialCard(props) {
         </div>
         <div style={{ fontSize: '0.62rem', lineHeight: 1.2 }}>
 
-  <span style={{ color: '#f2d308', fontWeight: 700 }}>
+  <span style={{ color: '#F5A623', fontWeight: 700 }}>
     {s.followers}
   </span>
 
-  <span style={{ color: '#f00606',opacity: 0.55 }}>
+  <span style={{ color: 'rgba(255,255,255,0.65)' }}>
     {' '}· {s.label}
   </span>
 
@@ -158,22 +158,11 @@ export default function Footer() {
             About Us
           </h4>
           <p style={{ fontSize: '0.82rem', lineHeight: 1.7, opacity: 0.7, marginBottom: 14 }}>
-            AgriWaste Nexus is an AI-powered platform helping Indian farmers convert
-            agricultural waste into biogas, biochar and carbon credits — creating a
-            circular economy for farm residue.
+            AgriWaste Nexus helps Indian farmers turn agricultural waste into biogas,
+            biochar and carbon credits — using ICAR and FAO conversion factors to put
+            real numbers behind a circular economy for farm residue.
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{
-              background: 'rgba(126,203,127,0.15)',
-              color: '#7ecb7f',
-              border: '1px solid rgba(126,203,127,0.3)',
-              padding: '3px 10px',
-              borderRadius: 20,
-              fontSize: '0.68rem',
-              fontWeight: 600,
-            }}>
-              🏆 Pune Agri Hackathon 2026
-            </span>
             <span style={{
               background: 'rgba(126,203,127,0.15)',
               color: '#7ecb7f',
@@ -351,11 +340,6 @@ export default function Footer() {
               </span>
             );
           })}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Team Thunder</span>
-          <span style={{ fontSize: '0.72rem', opacity: 0.3 }}>|</span>
-          <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Pune Agri Hackathon 2026</span>
         </div>
       </div>
 

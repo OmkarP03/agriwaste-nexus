@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useLang } from '../context/LangContext';
 
+// No flag emoji: Windows renders regional-indicator pairs as bare
+// letters ("GB"), which looks like a broken glyph. A globe plus the
+// language's own name is clearer and works on every platform.
 const LANGS = [
-  { code:'en', label:'EN', full:'English', flag:'🇬🇧' },
-  { code:'hi', label:'हि', full:'हिंदी',   flag:'🇮🇳' },
-  { code:'mr', label:'म',  full:'मराठी',   flag:'🟠'  },
+  { code: 'en', short: 'EN', full: 'English' },
+  { code: 'hi', short: 'हि', full: 'हिंदी' },
+  { code: 'mr', short: 'मर', full: 'मराठी' },
 ];
 
 export default function LangToggle() {
@@ -13,28 +16,103 @@ export default function LangToggle() {
   const current = LANGS.find(l => l.code === lang) || LANGS[0];
 
   return (
-    <div style={{ position:'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px', background:'var(--green-100)', color:'var(--green-800)', border:'1.5px solid var(--green-400)', borderRadius:20, cursor:'pointer', fontSize:'0.82rem', fontWeight:700, fontFamily:"'DM Sans', sans-serif" }}>
-        <span>{current.flag}</span>
-        <span>{current.label}</span>
-        <span style={{ fontSize:'0.65rem', opacity:0.6 }}>{open ? '▲' : '▼'}</span>
+    <div style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Language: ${current.full}. Change language`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '7px 13px',
+          background: 'var(--surface)',
+          color: 'var(--green-800)',
+          border: '1.5px solid var(--line)',
+          borderRadius: 'var(--radius-pill)',
+          cursor: 'pointer',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          fontFamily: 'var(--font-text)',
+          transition: 'border-color 0.18s, background 0.18s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green-400)'; e.currentTarget.style.background = 'var(--green-50)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.background = 'var(--surface)'; }}
+      >
+        <span aria-hidden="true" style={{ fontSize: '0.9rem' }}>🌐</span>
+        <span>{current.short}</span>
+        <span aria-hidden="true" style={{ fontSize: '0.55rem', opacity: 0.55 }}>
+          {open ? '▲' : '▼'}
+        </span>
       </button>
 
       {open && (
         <>
-          <div style={{ position:'fixed', inset:0, zIndex:98 }} onClick={() => setOpen(false)} />
-          <div style={{ position:'absolute', top:'calc(100% + 8px)', right:0, background:'var(--white)', border:'1px solid var(--gray-300)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.12)', zIndex:99, overflow:'hidden', minWidth:140 }}>
-            <div style={{ padding:'8px 12px', fontSize:'0.68rem', color:'var(--gray-500)', textTransform:'uppercase', letterSpacing:'0.8px', borderBottom:'1px solid var(--gray-100)' }}>
-              Language / भाषा / भाषा
+          <div style={{ position: 'fixed', inset: 0, zIndex: 298 }} onClick={() => setOpen(false)} />
+          <div
+            role="listbox"
+            aria-label="Language"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 299,
+              overflow: 'hidden',
+              minWidth: 168,
+            }}
+          >
+            <div style={{
+              padding: '9px 14px',
+              fontSize: '0.64rem',
+              color: 'var(--ink-soft)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              fontWeight: 700,
+              borderBottom: '1px solid var(--line-soft)',
+            }}>
+              Language / भाषा
             </div>
-            {LANGS.map(l => (
-              <button key={l.code} onClick={() => { changeLang(l.code); setOpen(false); }}
-                style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px', background: lang===l.code ? 'var(--green-50)' : 'transparent', border:'none', cursor:'pointer', fontSize:'0.88rem', fontFamily:"'DM Sans', sans-serif", color: lang===l.code ? 'var(--green-800)' : 'var(--gray-700)', fontWeight: lang===l.code ? 700 : 400, textAlign:'left' }}>
-                <span style={{ fontSize:'1.1rem' }}>{l.flag}</span>
-                <span>{l.full}</span>
-                {lang === l.code && <span style={{ marginLeft:'auto', color:'var(--green-600)' }}>✓</span>}
-              </button>
-            ))}
+
+            {LANGS.map(l => {
+              const active = lang === l.code;
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => { changeLang(l.code); setOpen(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: active ? 'var(--green-50)' : 'transparent',
+                    border: 'none',
+                    borderLeft: `3px solid ${active ? 'var(--green-600)' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontSize: '0.87rem',
+                    fontFamily: 'var(--font-text)',
+                    color: active ? 'var(--green-800)' : 'var(--gray-700)',
+                    fontWeight: active ? 700 : 500,
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{
+                    fontSize: '0.68rem', fontWeight: 800,
+                    width: 26, textAlign: 'center',
+                    color: active ? 'var(--green-700)' : 'var(--ink-soft)',
+                  }}>
+                    {l.short}
+                  </span>
+                  <span>{l.full}</span>
+                  {active && <span style={{ marginLeft: 'auto', color: 'var(--green-600)' }} aria-hidden="true">✓</span>}
+                </button>
+              );
+            })}
           </div>
         </>
       )}

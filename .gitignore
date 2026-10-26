@@ -1,1 +1,18 @@
-node_modules
+node_modules/
+.env
+.env.local
+.env.*.local
+
+# Build output
+build/
+dist/
+
+# Working folders, not part of the project
+_ui-backup/
+Claude outputs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+*.log

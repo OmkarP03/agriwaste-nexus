@@ -1,35 +1,44 @@
 import React from 'react';
 
+/**
+ * Application header.
+ *
+ * The emblem is used on its own (mark.png) rather than the full logo,
+ * because the logo file already contains the "AgriWaste Nexus"
+ * wordmark — pairing it with the text would print the name twice.
+ */
 export default function TopHeader() {
   return (
-    <div className="top-header">
-      <div className="header-logo-row">
-        <div className="header-logo-middle">
-          <img 
-  src="/images/logo2.png" 
-  alt="AgriWaste Nexus Logo"
-  className="header-logo"
-/>
-          <div className="header-brand-text">
-            <div className="header-hindi">कृषि अपशिष्ट नेक्सस</div>
-            <div className="header-title">AgriWaste Nexus</div>
-            <div className="header-satyamev">सत्यमेव जयते</div>
+    <header className="top-header">
+      <div className="header-inner">
+
+        <div className="header-lockup">
+          <img
+            className="header-mark"
+            src="/images/mark.png"
+            alt="AgriWaste Nexus"
+          />
+          <div className="header-text">
+            <span className="header-hindi">कृषि अपशिष्ट नेक्सस</span>
+            <span className="header-title">AgriWaste Nexus</span>
           </div>
         </div>
-        <div className="header-logo-right">
-          <div className="header-badges">
-            <div className="header-badge-item">
-              <span style={{ fontSize:'1.4rem' }}>🌾</span>
-              <span className="hb-label">Agri<br/>Innovation</span>
-            </div>
-            <div className="header-divider"></div>
-            <div className="header-badge-item">
-              <span style={{ fontSize:'1.1rem' }}>♻️</span>
-              <span className="hb-label">Digital<br/>India</span>
-            </div>
-          </div>
+
+        <div className="header-rule" aria-hidden="true" />
+        <p className="header-tagline">Smart Agricultural Waste Management</p>
+
+        <div className="header-badges">
+          <span className="header-badge-item">
+            <span aria-hidden="true">🌾</span>
+            <span className="hb-label">Agri Innovation</span>
+          </span>
+          <span className="header-badge-item">
+            <span aria-hidden="true">♻️</span>
+            <span className="hb-label">Digital India</span>
+          </span>
         </div>
+
       </div>
-    </div>
+    </header>
   );
 }

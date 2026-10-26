@@ -1,101 +1,199 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { API } from '../utils/apiRoot';
+import { useLang } from '../context/LangContext';
 
-const NAV_ITEMS = [
-  { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-  { id: 'calculator', icon: '🌾', label: 'Waste Calculator' },
-  { id: 'biogas', icon: '🔥', label: 'Biogas Estimator' },
-  { id: 'biochar', icon: '⚗️', label: 'Biochar Advisor' },
-  { id: 'carbon', icon: '🌍', label: 'Carbon Credits' },
-  { id: 'marketplace', icon: '🛒', label: 'Marketplace' },
-  { id: 'locator', icon: '📍', label: 'Plant Locator' },
-  { id: 'farmerId', icon: '🪪', label: 'Farmer ID' },
+// ── Navigation, grouped. Page ids are unchanged; `key` is the
+//    translation key so the language toggle reaches the nav too. ──
+const FARMER_NAV = [
+  {
+    label: 'navMain',
+    items: [
+      { id: 'dashboard',  icon: '📊', key: 'dashboard' },
+      { id: 'calculator', icon: '🌾', key: 'wasteCalculator' },
+      { id: 'biogas',     icon: '🔥', key: 'biogasEstimator' },
+      { id: 'biochar',    icon: '⚗️', key: 'biocharAdvisor' },
+    ],
+  },
+  {
+    label: 'navMarketplace',
+    items: [
+      { id: 'marketplace', icon: '🛒', key: 'marketplace' },
+      { id: 'requests',    icon: '📨', key: 'purchaseRequests' },
+      { id: 'myListings',  icon: '📋', key: 'myListings' },
+    ],
+  },
+  {
+    label: 'navImpact',
+    items: [
+      { id: 'carbon',   icon: '🌍', key: 'carbonCredits' },
+      { id: 'locator',  icon: '📍', key: 'plantLocator' },
+      { id: 'farmerId', icon: '🪪', key: 'farmerId' },
+    ],
+  },
 ];
 
 const BUYER_NAV = [
-  { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-  { id: 'marketplace', icon: '🛒', label: 'Marketplace' },
-  { id: 'locator', icon: '📍', label: 'Plant Locator' },
+  {
+    label: 'navMain',
+    items: [
+      { id: 'dashboard', icon: '📊', key: 'dashboard' },
+    ],
+  },
+  {
+    label: 'navMarketplace',
+    items: [
+      { id: 'marketplace', icon: '🛒', key: 'marketplace' },
+      { id: 'myRequests',  icon: '📨', key: 'myRequests' },
+    ],
+  },
+  {
+    label: 'navImpact',
+    items: [
+      { id: 'locator', icon: '📍', key: 'plantLocator' },
+    ],
+  },
+];
+
+const ADMIN_NAV = [
+  {
+    label: 'navMain',
+    items: [
+      { id: 'admin', icon: '👑', key: 'adminDashboard' },
+    ],
+  },
 ];
 
 export default function Sidebar({ activePage, setPage, sidebarOpen, setSidebarOpen }) {
   const { user, logout } = useAuth();
-  const navItems = user?.role === 'buyer' ? BUYER_NAV : NAV_ITEMS;
+  const { t } = useLang();
+  const [notifications, setNotifications] = useState([]);
+
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    function refresh() {
+      axios
+        .get(`${API}/notifications/${user._id}`)
+        .then(res => {
+          const list = res.data.notifications || [];
+          setNotifications(list);
+          // badge counts unread, not everything ever received
+          setUnread(res.data.unread ?? list.filter(n => !n.read).length);
+        })
+        .catch(() => { setNotifications([]); setUnread(0); });
+    }
+
+    refresh();
+
+    // the Notifications page fires this once it has marked them read
+    window.addEventListener('notifications:read', refresh);
+    return () => window.removeEventListener('notifications:read', refresh);
+  }, [user]);
+
+  const groups =
+    user?.role === 'admin' ? ADMIN_NAV
+      : user?.role === 'buyer' ? BUYER_NAV
+        : FARMER_NAV;
+
+  const roleLabel =
+    user?.role === 'admin' ? t('roleAdmin')
+      : user?.role === 'buyer' ? t('roleBuyer')
+        : t('roleFarmer');
+
+  const NavButton = ({ item, count }) => (
+    <button
+      type="button"
+      className={`nav-item ${activePage === item.id ? 'active' : ''}`}
+      aria-current={activePage === item.id ? 'page' : undefined}
+      onClick={() => setPage(item.id)}
+    >
+      <span className="icon" aria-hidden="true">{item.icon}</span>
+      <span>{item.key ? t(item.key) : item.label}</span>
+      {count > 0 && <span className="nav-count">{count}</span>}
+    </button>
+  );
 
   return (
     <>
-      {/* ✅ Dark overlay — only on mobile when sidebar is open */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
+          className="sidebar-overlay"
+          aria-hidden="true"
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(15,35,20,0.55)',
             zIndex: 99,
             display: 'none',
           }}
-          className="sidebar-overlay"
         />
       )}
-      <aside className={`sidebar ${sidebarOpen ? 'sidebar-mobile-open' : ''}`}>
+
+      <aside
+        className={`sidebar ${sidebarOpen ? 'sidebar-mobile-open' : ''}`}
+        aria-label="Main navigation"
+      >
         <div className="sidebar-logo">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <span className="leaf">🌿</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="sidebar-lockup">
+              <img className="sidebar-mark" src="/images/mark.png" alt="" aria-hidden="true" />
               <h1>AgriWaste Nexus</h1>
-<p>Smart Agricultural Waste Management</p>
             </div>
-            {/* ✅ Close button — only on mobile */}
             <button
-              className="sidebar-close-btn"
+              className="sidebar-close-btn push"
               onClick={() => setSidebarOpen && setSidebarOpen(false)}
+              aria-label="Close navigation menu"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </div>
         </div>
 
         {user && (
-          <div className="sidebar-user" onClick={() => setPage('profile')}>
-            <div className="su-avatar">{user.role === 'farmer' ? '🧑‍🌾' : '🏭'}</div>
-            <div className="su-info">
-              <div className="su-name">{user.name}</div>
-              <div className="su-role">{user.role === 'farmer' ? 'Farmer' : 'Buyer'} · {user.district || user.village || 'Maharashtra'}</div>
-            </div>
-            <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>›</div>
-          </div>
+          <button type="button" className="sidebar-user" onClick={() => setPage('profile')}>
+            <span className="su-avatar" aria-hidden="true">
+              {user.role === 'farmer' ? '🧑‍🌾' : user.role === 'admin' ? '👑' : '🏭'}
+            </span>
+            <span className="su-info">
+              <span className="su-name" style={{ display: 'block' }}>{user.name}</span>
+              <span className="su-role" style={{ display: 'block' }}>
+                {roleLabel} · {user.district || user.village || 'Maharashtra'}
+              </span>
+            </span>
+            <span style={{ fontSize: '0.75rem', opacity: 0.5 }} aria-hidden="true">›</span>
+          </button>
         )}
 
         <nav className="nav-section">
-          <label>Navigation</label>
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              className={`nav-item ${activePage === item.id ? 'active' : ''}`}
-              onClick={() => setPage(item.id)}
-            >
-              <span className="icon">{item.icon}</span>
-              {item.label}
-            </button>
+          {groups.map(group => (
+            <div className="nav-group" key={group.label}>
+              <label>{t(group.label)}</label>
+              {group.items.map(item => (
+                <NavButton key={item.id} item={item} />
+              ))}
+            </div>
           ))}
-          <div style={{ marginTop: 12 }}>
-            <label>Account</label>
-            <button className={`nav-item ${activePage === 'profile' ? 'active' : ''}`} onClick={() => setPage('profile')}>
-              <span className="icon">👤</span> My Profile
-            </button>
-            <button className="nav-item" onClick={logout}>
-              <span className="icon">🚪</span> Logout
+
+          <div className="nav-group">
+            <label>{t('navAccount')}</label>
+            <NavButton
+              item={{ id: 'notifications', icon: '🔔', key: 'notificationsNav' }}
+              count={unread}
+            />
+            <NavButton item={{ id: 'profile', icon: '👤', key: 'myProfile' }} />
+            <button type="button" className="nav-item" onClick={logout}>
+              <span className="icon" aria-hidden="true">🚪</span>
+              <span>{t('logout')}</span>
             </button>
           </div>
         </nav>
 
-        <div className="sidebar-footer">
-          <div>🏆 Pune Agri Hackathon 2026</div>
-          <div style={{ marginTop: 4 }}>Team Thunder</div>
-        </div>
       </aside>
     </>
   );
-
 }
